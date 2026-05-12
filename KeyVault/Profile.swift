@@ -1,14 +1,6 @@
-//
-//  Profile.swift
-//  KeyVaultApp
-//
-//  Created by Rayhan Islam Shuvro on 5/12/26.
-//
-
 import Foundation
-import Combine      // <-- add this line
+import Observation
 import SwiftUI
-
 
 // MARK: - Models
 
@@ -24,18 +16,18 @@ struct Profile: Identifiable, Codable, Equatable {
     }
 }
 
-// MARK: - Store (ObservableObject)
+// MARK: - Store (Observation framework)
 
-final class ProfileStore: ObservableObject {
-    @Published var profiles: [Profile] = []
-    @Published var activeProfileID: UUID?
+@Observable
+final class ProfileStore {
+    var profiles: [Profile] = []
+    var activeProfileID: UUID?
     
     private let storageDir: URL
     private let profilesFile: URL
     private let exportsFile: URL
 
     init() {
-        // Create ~/.env-switcher directory if needed
         let home = FileManager.default.homeDirectoryForCurrentUser
         storageDir = home.appendingPathComponent(".env-switcher")
         try? FileManager.default.createDirectory(at: storageDir,
@@ -43,7 +35,6 @@ final class ProfileStore: ObservableObject {
         profilesFile = storageDir.appendingPathComponent("profiles.json")
         exportsFile = storageDir.appendingPathComponent("exports")
         
-        // 🔍 Diagnostic print
         print(">>> ProfileStore init. storageDir = \(storageDir.path)")
         
         loadProfiles()
@@ -54,7 +45,6 @@ final class ProfileStore: ObservableObject {
     
     private func loadProfiles() {
         guard let data = try? Data(contentsOf: profilesFile) else {
-            // First launch – seed with an empty array
             profiles = []
             return
         }
@@ -96,7 +86,6 @@ final class ProfileStore: ObservableObject {
     
     func deleteProfile(_ profile: Profile) {
         if profile.id == activeProfileID {
-            // Deactivate before deleting
             deactivateAll()
         }
         profiles.removeAll { $0.id == profile.id }
@@ -107,7 +96,6 @@ final class ProfileStore: ObservableObject {
         guard let index = profiles.firstIndex(where: { $0.id == profile.id }) else { return }
         profiles[index] = profile
         saveProfiles()
-        // If this was the active profile, reactivate to pick up changes
         if profile.id == activeProfileID {
             writeExports(for: profile)
         }
@@ -144,7 +132,6 @@ final class ProfileStore: ObservableObject {
     private func deactivateAll() {
         activeProfileID = nil
         saveActiveProfileID()
-        // Clear the exports file
         try? "".write(to: exportsFile, atomically: true, encoding: .utf8)
     }
     
@@ -155,9 +142,9 @@ final class ProfileStore: ObservableObject {
         
         """
         for variable in profile.variables where !variable.key.isEmpty {
-            // Basic shell escaping for double quotes
-            let escapedValue = variable.value.replacingOccurrences(of: "\\", with: "\\\\")
-                                           .replacingOccurrences(of: "\"", with: "\\\"")
+            let escapedValue = variable.value
+                .replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "\"", with: "\\\"")
             lines += "export \(variable.key)=\"\(escapedValue)\"\n"
         }
         do {
@@ -169,10 +156,7 @@ final class ProfileStore: ObservableObject {
     
     // MARK: - First‑run helper
     
-    var needsSourceLine: Bool {
-        // We'll check lazily; for now just return true and let the UI handle it
-        return true
-    }
+    var needsSourceLine: Bool { true }
     
     func sourceLineInstruction() -> String {
         """

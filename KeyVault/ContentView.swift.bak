@@ -1,15 +1,19 @@
+//
+//  ContentView.swift
+//  KeyVaultApp
+//
+//  Created by Rayhan Islam Shuvro on 5/12/26.
+//
+
+
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(ProfileStore.self) private var store
+    @EnvironmentObject var store: ProfileStore
     @State private var selectedProfileID: UUID?
     @State private var showFirstRunHelp = false
-    @State private var profileToDelete: Profile?
-    @State private var showDeleteConfirmation = false
     
     var body: some View {
-        @Bindable var store = store
-        
         NavigationSplitView {
             sidebar
         } detail: {
@@ -35,26 +39,12 @@ struct ContentView: View {
                 New terminal sessions will use the active profile.
                 """)
         }
-        .alert("Delete Profile?", isPresented: $showDeleteConfirmation) {
-            Button("Delete", role: .destructive) {
-                if let profile = profileToDelete {
-                    withAnimation {
-                        store.deleteProfile(profile)
-                    }
-                }
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("The profile \"\(profileToDelete?.name ?? "")\" and all its variables will be permanently removed.")
-        }
     }
     
     // MARK: - Sidebar
     
     var sidebar: some View {
-        @Bindable var store = store
-        // Explicit return required because we have a @Bindable declaration
-        return List(selection: $selectedProfileID) {
+        List(selection: $selectedProfileID) {
             ForEach(store.profiles) { profile in
                 HStack {
                     Text(profile.name)
@@ -65,20 +55,8 @@ struct ContentView: View {
                     }
                 }
                 .tag(profile.id)
-                .contextMenu {
-                    Button("Delete") {
-                        profileToDelete = profile
-                        showDeleteConfirmation = true
-                    }
-                }
             }
-            .onDelete { indexSet in
-                if let index = indexSet.first {
-                    let profile = store.profiles[index]
-                    profileToDelete = profile
-                    showDeleteConfirmation = true
-                }
-            }
+            .onDelete(perform: deleteProfiles)
         }
         .toolbar {
             ToolbarItem {
@@ -94,10 +72,9 @@ struct ContentView: View {
     
     @ViewBuilder
     var detailView: some View {
-        @Bindable var store = store
-        
         if let profile = bindingForSelectedProfile() {
             VStack(alignment: .leading, spacing: 16) {
+                // Profile name
                 TextField("Profile Name", text: profile.name)
                     .font(.title)
                     .textFieldStyle(.plain)
@@ -105,32 +82,26 @@ struct ContentView: View {
                 
                 Divider()
                 
+                // Variables editor
                 Text("Environment Variables")
                     .font(.headline)
                 
                 List {
                     ForEach(profile.variables) { $variable in
-                        HStack {
-                            TextField("Key", text: $variable.key)
-                                .frame(width: 120)
-                            TextField("Value", text: $variable.value)
-                                .frame(minWidth: 200)
-                        }
+                        variableRow(variable: $variable, profile: profile)
                     }
                     .onDelete { indexSet in
-                        for index in indexSet {
-                            let variable = profile.wrappedValue.variables[index]
-                            store.deleteVariable(from: profile.wrappedValue.id, variableID: variable.id)
-                        }
+                        deleteVariables(in: profile.wrappedValue, offsets: indexSet)
                     }
                     
-                    Button(action: { store.addVariable(to: profile.wrappedValue.id, key: "KEY", value: "VALUE") }) {
+                    Button(action: { addVariable(to: profile.wrappedValue) }) {
                         Label("Add Variable", systemImage: "plus")
                     }
                 }
                 
                 Spacer()
                 
+                // Activate button
                 HStack {
                     if profile.wrappedValue.id == store.activeProfileID {
                         Label("Active", systemImage: "checkmark.circle.fill")
@@ -160,6 +131,7 @@ struct ContentView: View {
     private func bindingForSelectedProfile() -> Binding<Profile>? {
         guard let id = selectedProfileID,
               let index = store.profiles.firstIndex(where: { $0.id == id }) else {
+            // Fallback to first profile if none selected but profiles exist
             if !store.profiles.isEmpty && selectedProfileID == nil {
                 DispatchQueue.main.async {
                     selectedProfileID = store.profiles.first?.id
@@ -167,24 +139,52 @@ struct ContentView: View {
             }
             return nil
         }
-        // Create a binding manually – no need for $store
-        return Binding(
-            get: { store.profiles[index] },
-            set: { store.profiles[index] = $0 }
-        )
+        return $store.profiles[index]
     }
     
     private func addProfile() {
-        withAnimation {
-            store.addProfile(name: "New Profile")
-            if let last = store.profiles.last {
-                selectedProfileID = last.id
-            }
+        store.addProfile(name: "New Profile")
+        if let last = store.profiles.last {
+            selectedProfileID = last.id
+        }
+    }
+    
+    private func deleteProfiles(offsets: IndexSet) {
+        for index in offsets {
+            store.deleteProfile(store.profiles[index])
+        }
+        // Reset selection if needed
+        if let id = selectedProfileID, !store.profiles.contains(where: { $0.id == id }) {
+            selectedProfileID = nil
+        }
+    }
+    
+    private func addVariable(to profile: Profile) {
+        store.addVariable(to: profile.id, key: "KEY", value: "VALUE")
+    }
+    
+    private func deleteVariables(in profile: Profile, offsets: IndexSet) {
+        for index in offsets {
+            let variable = profile.variables[index]
+            store.deleteVariable(from: profile.id, variableID: variable.id)
+        }
+    }
+    
+    private func variableRow(variable: Binding<Profile.EnvVariable>,
+                             profile: Binding<Profile>) -> some View {
+        HStack {
+            TextField("Key", text: variable.key)
+                .frame(width: 120)
+            TextField("Value", text: variable.value)
+                .frame(minWidth: 200)
+        }
+        .onChange(of: variable.wrappedValue) { _, _ in
+            store.updateProfile(profile.wrappedValue)
         }
     }
 }
 
 #Preview {
     ContentView()
-        .environment(ProfileStore())
+        .environmentObject(ProfileStore())
 }
