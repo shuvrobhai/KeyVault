@@ -8,10 +8,14 @@
 import SwiftUI
 
 @main
-struct KeyVaultAppApp: App {
+struct KeyVaultApp: App {
+    @StateObject private var store = ProfileStore()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(store)
+                .frame(minWidth: 600, minHeight: 400)
         }
     }
 }

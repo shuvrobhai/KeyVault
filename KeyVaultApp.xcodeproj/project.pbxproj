@@ -11,9 +11,9 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		D3C44AFF2FB30AD000029117 /* KeyVaultApp */ = {
+		D3C44AFF2FB30AD000029117 /* KeyVault */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = KeyVaultApp;
+			path = KeyVault;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,7 +32,7 @@
 		D3C44AF42FB30AD000029117 = {
 			isa = PBXGroup;
 			children = (
-				D3C44AFF2FB30AD000029117 /* KeyVaultApp */,
+				D3C44AFF2FB30AD000029117 /* KeyVault */,
 				D3C44AFE2FB30AD000029117 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -61,7 +61,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				D3C44AFF2FB30AD000029117 /* KeyVaultApp */,
+				D3C44AFF2FB30AD000029117 /* KeyVault */,
 			);
 			name = KeyVaultApp;
 			packageProductDependencies = (
@@ -254,10 +254,9 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = NF6R48UY75;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -286,10 +285,9 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = NF6R48UY75;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
