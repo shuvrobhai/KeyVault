@@ -19,7 +19,9 @@ _Avoid_: Setting, export, env var (as a noun for the stored pair)
 **Active Profile**:
 The one profile whose environment variables are currently rendered into the
 exports file, and therefore the one new terminal sessions will use. Selecting a
-profile in the sidebar does not make it active; only activation does.
+profile in the sidebar does not make it active; only activation does. There is
+at most one; there may be none. When none is active — including after the active
+profile is deleted — the exports file is empty.
 _Avoid_: Selected profile, current profile, enabled profile, default profile
 
 **Activation**:
